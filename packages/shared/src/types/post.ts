@@ -6,6 +6,7 @@ export interface PostDTO {
     id: string;
     handle: string;
   };
+  hashtags?: string[];
 }
 
 export interface CreatePostDTO {

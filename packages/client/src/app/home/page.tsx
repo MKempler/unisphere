@@ -7,6 +7,7 @@ import { fetcher } from '@/lib/utils'
 import { PostDTO } from '@unisphere/shared'
 import { PostCard } from '@/components/post-card'
 import { ComposeBox } from '@/components/compose-box'
+import { TrendingHashtags } from '@/components/trending-hashtags'
 
 export default function HomePage() {
   const [posts, setPosts] = useState<PostDTO[]>([])
@@ -58,38 +59,47 @@ export default function HomePage() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Home</h1>
-      
-      <ComposeBox onPostCreated={handlePostCreated} />
-      
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Your Timeline</h2>
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="md:col-span-3">
+        <h1 className="text-2xl font-bold mb-6">Home</h1>
         
-        {isLoading ? (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="border border-gray-200 p-4 rounded-lg animate-pulse">
-                <div className="flex items-center mb-2">
-                  <div className="h-4 w-32 bg-gray-300 rounded"></div>
-                  <div className="h-3 w-16 bg-gray-200 rounded ml-2"></div>
+        <ComposeBox onPostCreated={handlePostCreated} />
+        
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Your Timeline</h2>
+          
+          {isLoading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="border border-gray-200 p-4 rounded-lg animate-pulse">
+                  <div className="flex items-center mb-2">
+                    <div className="h-4 w-32 bg-gray-300 rounded"></div>
+                    <div className="h-3 w-16 bg-gray-200 rounded ml-2"></div>
+                  </div>
+                  <div className="h-16 bg-gray-300 rounded"></div>
                 </div>
-                <div className="h-16 bg-gray-300 rounded"></div>
-              </div>
-            ))}
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>No posts to show yet.</p>
-            <p className="text-sm mt-1">Follow people or create a post to see your timeline!</p>
-          </div>
-        ) : (
-          <div>
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>No posts to show yet.</p>
+              <p className="text-sm mt-1">Follow people or create a post to see your timeline!</p>
+            </div>
+          ) : (
+            <div>
+              {posts.map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Sidebar */}
+      <div className="hidden md:block">
+        <div className="sticky top-4">
+          <TrendingHashtags />
+        </div>
       </div>
     </div>
   )

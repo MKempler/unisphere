@@ -76,6 +76,8 @@ The server will be available at http://localhost:3001 and the client at http://l
 - Follow/unfollow functionality
 - Custodial DID key management (simplified in this MVP)
 - Federation and peer synchronization between instances
+- Full-text search of posts across the network
+- Trending hashtags calculated hourly
 
 ## API Routes
 
@@ -85,6 +87,8 @@ The server will be available at http://localhost:3001 and the client at http://l
 - `POST /api/post`: Create a new post
 - `POST /api/follow/:userId`: Follow a user
 - `GET /api/timeline`: Get posts from followed users and self
+- `GET /api/search?q=:query&cursor=:cursor&limit=:limit`: Search posts by text or hashtags
+- `GET /api/search/trending?limit=:limit`: Get trending hashtags from the last hour
 
 ### Federation API Routes
 
@@ -197,6 +201,29 @@ Check your email for a magic link to log in to your new account. Once logged in,
 3. The old server broadcasts a PROFILE_MOVED event to all peers
 4. Followers can automatically follow your new account
 5. Your old account is marked as deprecated but not deleted
+
+## Search & Trending Features
+
+UniSphere provides powerful search and trending capabilities:
+
+### Search
+
+- Full-text search over all posts using PostgreSQL's built-in text search
+- Support for hashtag searches (e.g., `#unisphere`)
+- Results ranked by relevance
+- Cursor-based pagination for efficient browsing
+
+### Trending Hashtags
+
+- Hourly trending hashtags calculated from recent posts
+- Global trending view shows hashtags from the entire network
+- Updates automatically in the sidebar
+
+### Configuration
+
+Search indexing can be configured via environment variables:
+
+- `SEARCH_CRON_MS`: Interval between search indexing runs (default: 30000ms)
 
 ## License
 
