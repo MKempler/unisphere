@@ -6,6 +6,7 @@ import { PostModule } from './post/post.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { MailerService } from './common/mailer.service';
 import { AuthModule } from './auth/auth.module';
+import { FederationModule } from './federation/federation.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuthModule } from './auth/auth.module';
       global: true,
     }),
     PrismaModule,
+    FederationModule,
     AuthModule,
     UserModule,
     PostModule,

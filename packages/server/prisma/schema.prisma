@@ -20,12 +20,27 @@ model User {
   usedInvites      Invite[]
 }
 
-model Post {
+model RemoteUser {
   id        String   @id @default(uuid())
-  text      String
+  did       String   @unique
+  handle    String?
   createdAt DateTime @default(now())
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  String
+  // relations
+  posts     Post[]   @relation("RemoteAuthor")
+}
+
+model Post {
+  id            String      @id @default(uuid())
+  text          String
+  createdAt     DateTime    @default(now())
+  // Local author (null if remote)
+  author        User?       @relation(fields: [authorId], references: [id])
+  authorId      String?
+  // Remote author (null if local)
+  remoteAuthor  RemoteUser? @relation("RemoteAuthor", fields: [remoteAuthorId], references: [id])
+  remoteAuthorId String?
+  // Federation metadata
+  federationId  String?     @unique
 }
 
 model Follow {

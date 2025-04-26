@@ -9,10 +9,15 @@
     "lint": "eslint .",
     "test": "jest"
   },
-  "dependencies": {},
+  "dependencies": {
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1",
+    "uuid": "^9.0.0"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.0",
     "@types/node": "^18.15.11",
+    "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "^5.57.1",
     "@typescript-eslint/parser": "^5.57.1",
     "eslint": "^8.38.0",
