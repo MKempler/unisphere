@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { SignupDto, SignupCallbackDto } from './dto/auth.dto';
+import { SignupDto, SignupCallbackDto, ClaimDto } from './dto/auth.dto';
 import { AuthResponseDTO } from '@unisphere/shared';
 import { ApiResponse } from '../common/api-response';
 
@@ -45,5 +45,24 @@ export class AuthController {
     }
     
     return result;
+  }
+
+  @Post('claim')
+  @ApiOperation({ summary: 'Claim a migrated account' })
+  @SwaggerResponse({ status: 200, description: 'Account claimed successfully' })
+  @SwaggerResponse({ status: 400, description: 'Invalid import data or invite code' })
+  @HttpCode(HttpStatus.OK)
+  async claimAccount(@Body() claimDto: ClaimDto): Promise<ApiResponse<{ message: string }>> {
+    const result = await this.authService.claimAccount(
+      claimDto.exportJson,
+      claimDto.inviteCode,
+      claimDto.newEmail
+    );
+    
+    if (!result.ok) {
+      throw new BadRequestException(result.error);
+    }
+    
+    return ApiResponse.success({ message: 'Account claimed successfully. Check your email for a magic link to log in.' });
   }
 } 

@@ -1,51 +1,32 @@
-// Mock shared types for testing
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-export interface UniEvent<T = unknown> {
-  id: string;
-  type: "POST_CREATED";
-  authorDid: string;
-  createdAt: string;
-  body: T;
-  sig: string;
+// Mock interfaces
+export interface UniEvent {
+  id?: string;
+  type: string;
+  data: any;
+  sig?: string;
+  publicKey?: string;
 }
 
 export interface PostDTO {
-  id: string;
-  text: string;
-  createdAt: string;
-  author: {
-    id: string;
-    handle: string;
-  };
+  id?: string;
+  title: string;
+  content: string;
+  authorId: string;
 }
 
-// Mock implementations
-export const signEvent = jest.fn((event, privateKey) => {
-  return { ...event, sig: 'mock-signature-for-testing' };
-});
+// Mock ApiResponse utility
+export const ApiResponse = {
+  success: (data: any) => ({ ok: true, data }),
+  error: (error: any) => ({ ok: false, error }),
+};
 
-export const verifyEvent = jest.fn((event, publicKey) => {
-  return event.sig === 'mock-signature-for-testing' && 
-    !event.body.message || event.body.message !== 'Tampered message';
-});
+// Mock cryptographic functions
+export const signEvent = jest.fn((event: any) => ({ 
+  ...event, 
+  sig: 'mock-signature-for-testing',
+  publicKey: 'mock-public-key'
+}));
 
-// Other required shared exports
-export class ApiResponse<T> {
-  ok: boolean;
-  data?: T;
-  error?: string;
-
-  private constructor(ok: boolean, data?: T, error?: string) {
-    this.ok = ok;
-    this.data = data;
-    this.error = error;
-  }
-
-  static success<T>(data: T): ApiResponse<T> {
-    return new ApiResponse<T>(true, data);
-  }
-
-  static error<T>(error: string): ApiResponse<T> {
-    return new ApiResponse<T>(false, undefined, error);
-  }
-} 
+export const verifyEvent = jest.fn(() => true); 

@@ -151,6 +151,53 @@ UniSphere uses a simple event-based federation system:
 
 Events are cryptographically signed using the user's DID keys to ensure authenticity.
 
+## Moving your account in 3 commands
+
+UniSphere allows you to migrate your account from one node to another while preserving your DID, handle, and follower relationships.
+
+### Export your account from the old node
+
+```bash
+# On your old node
+pnpm ts-node bin/account-export alice@example.com
+```
+
+This will generate a JSON file with your account data. The CLI will ask if you want to broadcast a PROFILE_MOVED event to your followers. If you enter a URL, the event will be sent; otherwise, it will be skipped.
+
+### Import your account on the new node
+
+```bash
+# On your new node
+curl -X POST http://localhost:3000/auth/claim \
+  -H "Content-Type: application/json" \
+  -d '{
+    "exportJson": "PASTE_EXPORT_JSON_HERE",
+    "inviteCode": "YOUR_INVITE_CODE",
+    "newEmail": "alice@newnode.com"
+  }'
+```
+
+Alternatively, you can upload the JSON file directly:
+
+```bash
+curl -X POST http://localhost:3000/auth/claim \
+  -F "exportJson=@alice.json" \
+  -F "inviteCode=YOUR_INVITE_CODE" \
+  -F "newEmail=alice@newnode.com"
+```
+
+### Complete the login process
+
+Check your email for a magic link to log in to your new account. Once logged in, you'll have access to your old DID and handle, and your followers will be notified of your move.
+
+## How migration works
+
+1. Your DID and encrypted private key are preserved exactly as they were
+2. Your handle is claimed on the new server
+3. The old server broadcasts a PROFILE_MOVED event to all peers
+4. Followers can automatically follow your new account
+5. Your old account is marked as deprecated but not deleted
+
 ## License
 
 MIT 

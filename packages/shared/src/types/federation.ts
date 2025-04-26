@@ -1,13 +1,24 @@
 import * as nacl from 'tweetnacl';
 import * as naclUtil from 'tweetnacl-util';
 
+export type UniEventType = "POST_CREATED" | "PROFILE_MOVED";
+
 export interface UniEvent<T = unknown> {
   id: string;          // UUID v4
-  type: "POST_CREATED";
+  type: UniEventType;
   authorDid: string;
   createdAt: string;   // ISO
-  body: T;             // Post payload
+  body: T;             // Event payload
   sig: string;         // Ed25519 signature (base64)
+}
+
+export interface UniEventProfileMoved {
+  id: string;
+  type: "PROFILE_MOVED";
+  authorDid: string;    // old server
+  newHome: string;      // base-url of new server
+  createdAt: string;
+  sig: string;
 }
 
 /**

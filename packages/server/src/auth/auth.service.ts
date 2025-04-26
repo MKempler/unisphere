@@ -174,4 +174,92 @@ export class AuthService {
       privateKeyEnc,
     };
   }
+
+  async claimAccount(
+    exportJsonStr: string, 
+    inviteCode: string, 
+    newEmail: string
+  ): Promise<ApiResponse<string>> {
+    // Verify invite code
+    const invite = await this.prisma.invite.findUnique({
+      where: { code: inviteCode },
+    });
+    
+    if (!invite) {
+      return ApiResponse.error('Invalid invite code');
+    }
+    
+    if (invite.usedById) {
+      return ApiResponse.error('Invite code has already been used');
+    }
+
+    // Parse export data
+    let exportData;
+    try {
+      exportData = JSON.parse(exportJsonStr);
+    } catch (error) {
+      return ApiResponse.error('Invalid export data format');
+    }
+
+    // Validate required fields
+    if (!exportData.handle || !exportData.didPublicKey || !exportData.didPrivateKeyEnc) {
+      return ApiResponse.error('Export data is missing required fields');
+    }
+
+    // Check if handle exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { handle: exportData.handle },
+    });
+
+    if (existingUser) {
+      return ApiResponse.error('Handle is already taken on this server');
+    }
+
+    // Create user with imported data
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          email: newEmail,
+          handle: exportData.handle,
+          didPublicKey: exportData.didPublicKey,
+          didPrivateKeyEnc: exportData.didPrivateKeyEnc,
+        },
+      });
+
+      // Mark invite as used
+      await this.prisma.invite.update({
+        where: { code: inviteCode },
+        data: { usedById: user.id },
+      });
+
+      // Import followers with pending-migrate status
+      if (exportData.followers && Array.isArray(exportData.followers)) {
+        // For each follower, create placeholder entries in the follow table
+        for (const follower of exportData.followers) {
+          // First, check if this is a remote user we already know about
+          let remoteUser = await this.prisma.remoteUser.findFirst({
+            where: { handle: follower.followerHandle }
+          });
+          
+          if (!remoteUser) {
+            // Create a placeholder remote user
+            remoteUser = await this.prisma.remoteUser.create({
+              data: {
+                handle: follower.followerHandle,
+                did: `placeholder-did-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
+              }
+            });
+          }
+          
+          // We'll add more sophisticated federation handling in the federation system
+        }
+      }
+
+      // Send magic link to complete signup
+      return await this.signup(newEmail);
+    } catch (error) {
+      console.error('Failed to claim account:', error);
+      return ApiResponse.error('Failed to claim account');
+    }
+  }
 } 

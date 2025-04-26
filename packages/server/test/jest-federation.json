@@ -4,14 +4,14 @@
     "json",
     "ts"
   ],
-  "rootDir": ".",
+  "rootDir": "../",
   "testEnvironment": "node",
-  "testRegex": ".federation.spec.ts$",
+  "testRegex": "\\.federation\\.spec\\.ts$",
   "transform": {
-    "^.+\\.tsx?$": ["ts-jest", { "tsconfig": "./tsconfig.json" }]
+    "^.+\\.tsx?$": ["ts-jest", { "tsconfig": "tsconfig.json" }]
   },
   "moduleNameMapper": {
     "^@unisphere/shared$": "<rootDir>/../shared/src"
   },
-  "setupFilesAfterEnv": ["../jest.setup.ts"]
+  "setupFilesAfterEnv": ["<rootDir>/jest.setup.ts"]
 } 

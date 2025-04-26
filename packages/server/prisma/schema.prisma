@@ -14,6 +14,7 @@ model User {
   didPublicKey     String?
   didPrivateKeyEnc String?
   createdAt        DateTime  @default(now())
+  isDeprecated     Boolean   @default(false)
   posts            Post[]
   following        Follow[]  @relation("Follower")
   followers        Follow[]  @relation("Followee")
@@ -24,6 +25,7 @@ model RemoteUser {
   id        String   @id @default(uuid())
   did       String   @unique
   handle    String?
+  homeUrl   String?
   createdAt DateTime @default(now())
   // relations
   posts     Post[]   @relation("RemoteAuthor")

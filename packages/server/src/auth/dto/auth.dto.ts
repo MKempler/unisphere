@@ -19,4 +19,10 @@ export class SignupCallbackDto implements SignupCallbackDTO {
   @IsString()
   @IsOptional()
   inviteCode?: string;
+}
+
+export class ClaimDto {
+  exportJson: string;
+  inviteCode: string;
+  newEmail: string;
 } 

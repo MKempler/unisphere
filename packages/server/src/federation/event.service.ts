@@ -1,9 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PeerService } from './peer.service';
-import { UniEvent, verifyEvent } from '@unisphere/shared';
+import { UniEvent, verifyEvent, signEvent } from '@unisphere/shared';
 import axios from 'axios';
 import { PostDTO } from '@unisphere/shared';
+import { v4 as uuidv4 } from 'uuid';
+
+// Interface for PROFILE_MOVED event body
+interface ProfileMovedData {
+  newHome: string;
+}
 
 @Injectable()
 export class EventService {
@@ -56,6 +62,25 @@ export class EventService {
   }
 
   /**
+   * Publish a PROFILE_MOVED event
+   */
+  async publishProfileMoved(userDid: string, newHome: string, privateKeyEnc: string): Promise<void> {
+    const event = {
+      id: uuidv4(),
+      type: 'PROFILE_MOVED' as const,
+      authorDid: userDid,
+      createdAt: new Date().toISOString(),
+      body: { newHome }
+    };
+
+    // Sign the event
+    const signedEvent = signEvent(event, privateKeyEnc);
+    
+    // Publish to all peers
+    await this.publish(signedEvent);
+  }
+
+  /**
    * Receive and process an event from a peer
    */
   async receive<T>(event: UniEvent<T>): Promise<void> {
@@ -71,6 +96,8 @@ export class EventService {
     // Handle event based on type
     if (event.type === 'POST_CREATED') {
       await this.handlePostCreatedEvent(event as UniEvent<PostDTO>);
+    } else if (event.type === 'PROFILE_MOVED') {
+      await this.handleProfileMovedEvent(event as UniEvent<ProfileMovedData>);
     } else {
       this.logger.warn(`Unsupported event type: ${event.type}`);
     }
@@ -119,5 +146,83 @@ export class EventService {
     });
 
     this.logger.log(`Successfully created federated post ${post.id}`);
+  }
+
+  /**
+   * Handle a PROFILE_MOVED event
+   */
+  private async handleProfileMovedEvent(event: UniEvent<ProfileMovedData>): Promise<void> {
+    const { authorDid, body } = event;
+    const { newHome } = body;
+
+    this.logger.log(`Processing PROFILE_MOVED event for ${authorDid} to ${newHome}`);
+
+    try {
+      // Check for local user with this DID
+      const localUser = await this.prisma.user.findFirst({
+        where: { didPublicKey: authorDid }
+      });
+
+      if (localUser) {
+        // Mark local user as deprecated
+        await this.prisma.user.update({
+          where: { id: localUser.id },
+          data: { isDeprecated: true }
+        });
+        this.logger.log(`Marked local user ${localUser.handle} as deprecated`);
+
+        // Get all followers
+        const followers = await this.prisma.follow.findMany({
+          where: { followeeId: localUser.id },
+          include: { follower: true }
+        });
+
+        // Auto-follow the user at their new home for all followers
+        for (const follow of followers) {
+          this.logger.log(`User ${follow.follower.handle} was following ${localUser.handle}. Adding remote follow record.`);
+          
+          // Create or update remote user record
+          let remoteUser = await this.prisma.remoteUser.findFirst({
+            where: { did: authorDid }
+          });
+
+          if (!remoteUser) {
+            remoteUser = await this.prisma.remoteUser.create({
+              data: {
+                did: authorDid,
+                handle: localUser.handle,
+                homeUrl: newHome
+              }
+            });
+          } else {
+            remoteUser = await this.prisma.remoteUser.update({
+              where: { id: remoteUser.id },
+              data: { homeUrl: newHome }
+            });
+          }
+          
+          // TODO: Create remote follow relationship
+          // This requires extending the schema to track remote follows
+        }
+      } else {
+        // Check for remote user
+        const remoteUser = await this.prisma.remoteUser.findFirst({
+          where: { did: authorDid }
+        });
+
+        if (remoteUser) {
+          // Update home URL
+          await this.prisma.remoteUser.update({
+            where: { id: remoteUser.id },
+            data: { homeUrl: newHome }
+          });
+          this.logger.log(`Updated remote user ${remoteUser.handle} with new home URL: ${newHome}`);
+        } else {
+          this.logger.warn(`No user found with DID ${authorDid}, cannot process PROFILE_MOVED event`);
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Error processing PROFILE_MOVED event: ${error.message}`);
+    }
   }
 } 
