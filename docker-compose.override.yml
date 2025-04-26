@@ -6,4 +6,4 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: unisphere_b
     ports:
-      - "5433:5432" 
+      - "5442:5432" 

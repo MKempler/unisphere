@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import "dotenv/config";
 import { jest } from '@jest/globals';
-require('dotenv').config({ path: '.env.test' });
 
 // Set environment variables for tests
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'testsecret';
 process.env.FEDERATION_TIMEOUT_MS = process.env.FEDERATION_TIMEOUT_MS || '1000';
 process.env.PEERS = process.env.PEERS || 'http://localhost:4100';
 process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/unisphere_test';
-process.env.DATABASE_URL_NODE_B = process.env.DATABASE_URL_NODE_B || 'postgres://postgres:postgres@localhost:5433/unisphere_b';
+process.env.DATABASE_URL_NODE_B = process.env.DATABASE_URL_NODE_B || 'postgres://postgres:postgres@localhost:5442/unisphere_b';
 process.env.SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || 'dummytoken';
 process.env.CLIENT_BASE_URL = process.env.CLIENT_BASE_URL || 'http://localhost:3000';
 
