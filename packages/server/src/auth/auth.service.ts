@@ -2,7 +2,10 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailerService } from '../common/mailer.service';
 import { AuthResponseDTO, JWTPayload } from '@unisphere/shared';
+import { encrypt } from '../common/crypto';
+import { ApiResponse } from '../common/api-response';
 
 @Injectable()
 export class AuthService {
@@ -12,9 +15,25 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
   ) {}
 
-  async signup(email: string): Promise<string> {
+  async signup(email: string, inviteCode?: string): Promise<ApiResponse<string>> {
+    // If invite code is provided, check its validity
+    if (inviteCode) {
+      const invite = await this.prisma.invite.findUnique({
+        where: { code: inviteCode },
+      });
+      
+      if (!invite) {
+        return ApiResponse.error('Invalid invite code');
+      }
+      
+      if (invite.usedById) {
+        return ApiResponse.error('Invite code has already been used');
+      }
+    }
+    
     // Generate a token that expires in 15 minutes
     const token = crypto.randomBytes(32).toString('hex');
     const expires = new Date();
@@ -23,25 +42,26 @@ export class AuthService {
     // Store token with email
     this.magicLinkTokens[token] = { email, expires };
 
-    // For a production app, we'd send an email here
-    // For this MVP, we'll log the magic link to the console
-    const magicLink = `http://localhost:3000/auth/callback?token=${token}`;
-    console.log(`Magic link for ${email}:`);
-    console.log(magicLink);
+    // Send magic link via email
+    try {
+      await this.mailerService.sendMagicLink(email, token);
+    } catch (error) {
+      return ApiResponse.error('Failed to send magic link email');
+    }
     
-    return token;
+    return ApiResponse.success(token);
   }
 
-  async verifyCallbackToken(token: string): Promise<AuthResponseDTO> {
+  async verifyCallbackToken(token: string, inviteCode?: string): Promise<ApiResponse<AuthResponseDTO>> {
     const storedToken = this.magicLinkTokens[token];
     
     if (!storedToken) {
-      throw new NotFoundException('Invalid or expired token');
+      return ApiResponse.error('Invalid or expired token');
     }
     
     if (new Date() > storedToken.expires) {
       delete this.magicLinkTokens[token];
-      throw new UnauthorizedException('Token has expired');
+      return ApiResponse.error('Token has expired');
     }
     
     const { email } = storedToken;
@@ -52,6 +72,26 @@ export class AuthService {
     });
     
     if (!user) {
+      // If we're using invite codes and none was provided, don't allow creation
+      if (process.env.REQUIRE_INVITE === 'true' && !inviteCode) {
+        return ApiResponse.error('Invite code required for new user registration');
+      }
+
+      // If an invite code was provided, verify it
+      if (inviteCode) {
+        const invite = await this.prisma.invite.findUnique({
+          where: { code: inviteCode },
+        });
+        
+        if (!invite) {
+          return ApiResponse.error('Invalid invite code');
+        }
+        
+        if (invite.usedById) {
+          return ApiResponse.error('Invite code has already been used');
+        }
+      }
+
       // Generate handle from email
       const baseHandle = email.split('@')[0].toLowerCase();
       
@@ -68,6 +108,14 @@ export class AuthService {
             didPrivateKeyEnc: didKeyPair.privateKeyEnc,
           },
         });
+        
+        // Mark invite as used if one was provided
+        if (inviteCode) {
+          await this.prisma.invite.update({
+            where: { code: inviteCode },
+            data: { usedById: user.id },
+          });
+        }
       } catch (error) {
         // If handle is taken, add a random suffix
         const randomSuffix = Math.floor(Math.random() * 10000);
@@ -79,6 +127,14 @@ export class AuthService {
             didPrivateKeyEnc: didKeyPair.privateKeyEnc,
           },
         });
+        
+        // Mark invite as used if one was provided
+        if (inviteCode) {
+          await this.prisma.invite.update({
+            where: { code: inviteCode },
+            data: { usedById: user.id },
+          });
+        }
       }
     }
     
@@ -94,14 +150,14 @@ export class AuthService {
     
     const jwt = this.jwtService.sign(payload);
     
-    return {
+    return ApiResponse.success({
       token: jwt,
       user: {
         id: user.id,
         email: user.email,
         handle: user.handle,
       },
-    };
+    });
   }
 
   private generateDidKeyPair() {
@@ -109,8 +165,9 @@ export class AuthService {
     // For this MVP, we'll simulate with a random value
     const publicKey = `did:key:${crypto.randomBytes(16).toString('hex')}`;
     const privateKey = crypto.randomBytes(32).toString('hex');
-    // In a real app, this would be encrypted with the user's password or a master key
-    const privateKeyEnc = privateKey;
+    
+    // Encrypt the private key with AES-256-GCM using JWT_SECRET
+    const privateKeyEnc = encrypt(privateKey);
     
     return {
       publicKey,

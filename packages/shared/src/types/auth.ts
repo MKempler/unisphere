@@ -1,9 +1,11 @@
 export interface SignupRequestDTO {
   email: string;
+  inviteCode?: string;
 }
 
 export interface SignupCallbackDTO {
   token: string;
+  inviteCode?: string;
 }
 
 export interface AuthResponseDTO {
