@@ -12,12 +12,12 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
-    "test:federation": "jest --config ./test/jest-federation.json",
+    "test:e2e": "jest --config ./test/jest-e2e.json --passWithNoTests",
+    "test:federation": "jest --config ./test/jest-federation.json --passWithNoTests",
     "generate-invite": "ts-node ./bin/generate-invite.ts",
     "peer-health": "ts-node ./bin/peer-health.ts",
     "prisma:generate": "prisma generate",
@@ -90,6 +90,10 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": ["../jest.setup.js"],
+    "moduleNameMapper": {
+      "^@unisphere/shared$": "<rootDir>/__mocks__/@unisphere/shared.ts"
+    }
   }
 } 

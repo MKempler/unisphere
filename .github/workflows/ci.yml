@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      CI: 'true'
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/unisphere_test?schema=public'
 
     steps:
     - uses: actions/checkout@v3
@@ -41,6 +44,9 @@ jobs:
     - name: Install dependencies
       run: pnpm install
     
+    - name: Generate Prisma Client
+      run: cd packages/server && npx prisma generate
+
     - name: Lint
       run: pnpm lint
     
@@ -49,6 +55,10 @@ jobs:
     
     - name: Test
       run: pnpm test
+      env:
+        JWT_SECRET: 'test-jwt-secret'
+        FEDERATION_TIMEOUT_MS: '1000'
+        PEERS: 'http://localhost:4100'
 
   docker:
     needs: test
