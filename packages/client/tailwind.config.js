@@ -22,7 +22,8 @@ module.exports = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
+          DEFAULT: "#3B82F6",
+          dark: "#1E3A8A",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
@@ -38,7 +39,7 @@ module.exports = {
           foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
+          DEFAULT: "#10B981",
           foreground: "hsl(var(--accent-foreground))",
         },
         popover: {
@@ -49,6 +50,13 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        n: {
+          50: "#F8FAFC",
+          900: "#0F172A",
+        },
+      },
+      fontFamily: {
+        sans: ['"Poppins"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -1,6 +1,6 @@
-# Unisphere Quickstart Guide
+# Kavira Quickstart Guide
 
-This guide will help you set up Unisphere for local development or cloud deployment.
+This guide will help you set up Kavira for local development or cloud deployment.
 
 ## Local Development
 
@@ -16,8 +16,8 @@ This guide will help you set up Unisphere for local development or cloud deploym
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/unisphere.git
-   cd unisphere
+   git clone https://github.com/yourusername/kavira.git
+   cd kavira
    ```
 
 2. **Install dependencies**
@@ -86,13 +86,13 @@ This guide will help you set up Unisphere for local development or cloud deploym
 5. **Create a PostgreSQL database**
 
    ```bash
-   fly postgres create --name unisphere-db
+   fly postgres create --name kavira-db
    ```
 
 6. **Attach the database**
 
    ```bash
-   fly postgres attach --app unisphere unisphere-db
+   fly postgres attach --app kavira kavira-db
    ```
 
 7. **Deploy the application**

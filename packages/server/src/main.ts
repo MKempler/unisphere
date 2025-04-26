@@ -75,8 +75,8 @@ async function bootstrap() {
 
   // Set up Swagger
   const config = new DocumentBuilder()
-    .setTitle('UniSphere API')
-    .setDescription('UniSphere social platform API')
+    .setTitle('Kavira API')
+    .setDescription('Kavira social platform API')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

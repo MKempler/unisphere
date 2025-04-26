@@ -1,6 +1,6 @@
-# Unisphere Server
+# Kavira Server
 
-Backend API server for the Unisphere social network platform.
+Backend API server for the Kavira social network platform.
 
 ## Features
 
@@ -27,7 +27,7 @@ See the [QUICKSTART.md](./QUICKSTART.md) guide for detailed instructions on loca
 
 ### Fly.io Deployment
 
-Unisphere can be easily deployed to Fly.io:
+Kavira can be easily deployed to Fly.io:
 
 ```bash
 # Launch with existing configuration

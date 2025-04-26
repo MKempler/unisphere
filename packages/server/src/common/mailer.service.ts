@@ -15,7 +15,7 @@ export class MailerService {
     }
 
     this.isDevelopment = process.env.NODE_ENV === 'development';
-    this.fromEmail = process.env.MAIL_FROM || 'noreply@unisphere.example.com';
+    this.fromEmail = process.env.MAIL_FROM || 'noreply@kavira.app';
     this.clientBaseUrl = process.env.CLIENT_BASE_URL || 'http://localhost:3000';
   }
 
@@ -38,23 +38,26 @@ export class MailerService {
     const msg = {
       to,
       from: this.fromEmail,
-      subject: 'Your UniSphere Magic Link',
-      text: `Welcome to UniSphere! Click this link to sign in: ${magicLinkUrl}`,
+      subject: 'Your Kavira Magic Link',
+      text: `Welcome to Kavira! Click this link to sign in: ${magicLinkUrl}`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Welcome to UniSphere!</h2>
+        <div style="font-family: 'Poppins', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Welcome to Kavira!</h2>
           <p>Click the button below to sign in to your account. This link is valid for 15 minutes.</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="${magicLinkUrl}" 
-               style="background-color: #4F46E5; color: white; padding: 12px 24px; 
+               style="background-color: #3B82F6; color: white; padding: 12px 24px; 
                       text-decoration: none; border-radius: 4px; font-weight: bold;">
-              Sign In to UniSphere
+              Sign In to Kavira
             </a>
           </div>
           <p>Or copy and paste this URL into your browser:</p>
-          <p style="word-break: break-all; color: #4F46E5;">${magicLinkUrl}</p>
+          <p style="word-break: break-all; color: #3B82F6;">${magicLinkUrl}</p>
           <p style="color: #6B7280; margin-top: 30px; font-size: 0.9em;">
             If you didn't request this email, you can safely ignore it.
+          </p>
+          <p style="color: #6B7280; font-size: 0.9em; margin-top: 20px;">
+            Kavira - One world. Many voices.
           </p>
         </div>
       `,
