@@ -9,6 +9,10 @@ export class SignupDto implements SignupRequestDTO {
   @IsString()
   @IsOptional()
   inviteCode?: string;
+  
+  @IsString()
+  @IsOptional()
+  captchaToken?: string;
 }
 
 export class SignupCallbackDto implements SignupCallbackDTO {
@@ -22,7 +26,19 @@ export class SignupCallbackDto implements SignupCallbackDTO {
 }
 
 export class ClaimDto {
-  exportJson: string;
-  inviteCode: string;
-  newEmail: string;
+  @IsString()
+  @IsNotEmpty()
+  handle: string;
+}
+
+export class ConfirmDto {
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+}
+
+export class ForgotPasswordDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
 } 

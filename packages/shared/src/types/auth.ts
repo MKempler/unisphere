@@ -1,6 +1,7 @@
 export interface SignupRequestDTO {
   email: string;
   inviteCode?: string;
+  captchaToken?: string;
 }
 
 export interface SignupCallbackDTO {
@@ -12,8 +13,8 @@ export interface AuthResponseDTO {
   token: string;
   user: {
     id: string;
-    email: string;
     handle: string;
+    email: string;
   };
 }
 

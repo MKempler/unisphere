@@ -3,9 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { PostDTO } from '@unisphere/shared';
 import { ApiResponse } from '../common/api-response';
 import { EventService } from '../federation/event.service';
-import { UniEvent } from '@unisphere/shared';
 import { v4 as uuidv4 } from 'uuid';
-import { decrypt } from '../common/crypto';
 
 @Injectable()
 export class PostService {
@@ -14,57 +12,43 @@ export class PostService {
     private readonly eventService: EventService,
   ) {}
 
-  async createPost(authorId: string, text: string): Promise<ApiResponse<PostDTO>> {
-    // Validate text length (max 500 characters)
-    if (!text || text.length > 500) {
-      return ApiResponse.error('Post text must be between 1 and 500 characters');
-    }
-
+  async createPost(userId: string, text: string, mediaUrl?: string): Promise<ApiResponse<PostDTO>> {
     try {
-      // Get the user to access DID keys
-      const user = await this.prisma.user.findUnique({
-        where: { id: authorId },
-      });
-
-      if (!user) {
-        return ApiResponse.error('User not found');
-      }
-
-      // Extract hashtags
-      const hashtags = this.extractHashtags(text);
-
-      // Create post with hashtag connections
+      // Extract hashtags from the text
+      const hashtagNames = this.extractHashtags(text);
+      
+      // Create post with federation ID
       const post = await this.prisma.$transaction(async (tx) => {
         // Create the post first
         const newPost = await tx.post.create({
           data: {
             text,
-            authorId,
+            authorId: userId,
+            mediaUrl,
+            federationId: uuidv4(),
+            indexed: true,
           },
         });
 
-        // Create or connect hashtags
-        if (hashtags.length > 0) {
-          // Create hashtags that don't exist yet and link them to the post
-          for (const tag of hashtags) {
-            // Find or create the hashtag
-            const hashtag = await tx.hashtag.upsert({
-              where: { name: tag },
-              create: { name: tag },
-              update: {},
-            });
+        // Create hashtags that don't exist yet and link them to the post
+        for (const name of hashtagNames) {
+          // Find or create the hashtag
+          const hashtag = await tx.hashtag.upsert({
+            where: { name },
+            create: { name },
+            update: {},
+          });
 
-            // Connect hashtag to post
-            await tx.hashtagsOnPosts.create({
-              data: {
-                postId: newPost.id,
-                hashtagId: hashtag.id,
-              },
-            });
-          }
+          // Connect hashtag to post
+          await tx.hashtagsOnPosts.create({
+            data: {
+              postId: newPost.id,
+              hashtagId: hashtag.id,
+            },
+          });
         }
 
-        return tx.post.findUnique({
+        return await tx.post.findUnique({
           where: { id: newPost.id },
           include: {
             author: true,
@@ -77,9 +61,32 @@ export class PostService {
         });
       });
 
-      const hashtagNames = post.hashtags.map(relation => relation.hashtag.name);
+      if (!post) {
+        return ApiResponse.error('Failed to create post');
+      }
 
-      const postDTO: PostDTO = {
+      // Publish federation event
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      
+      if (user && user.didPublicKey) {
+        this.eventService.publish({
+          id: uuidv4(),
+          type: 'POST_CREATED',
+          authorDid: user.didPublicKey,
+          createdAt: new Date().toISOString(),
+          body: {
+            id: post.id,
+            text: post.text,
+            mediaUrl: post.mediaUrl,
+          },
+          sig: '', // This would be a real signature in production
+        });
+      }
+
+      // Format response
+      return ApiResponse.success({
         id: post.id,
         text: post.text,
         createdAt: post.createdAt.toISOString(),
@@ -87,50 +94,20 @@ export class PostService {
           id: post.author.id,
           handle: post.author.handle,
         },
-        hashtags: hashtagNames,
-      };
-
-      // Broadcast to peers
-      try {
-        if (user.didPublicKey && user.didPrivateKeyEnc) {
-          // Decrypt the private key
-          const privateKey = user.didPrivateKeyEnc; // In reality, we would decrypt this
-
-          // Create and publish federation event
-          const event: UniEvent<PostDTO> = {
-            id: uuidv4(),
-            type: "POST_CREATED",
-            authorDid: user.didPublicKey,
-            createdAt: new Date().toISOString(),
-            body: postDTO,
-            sig: '' // This would be a real signature in production
-          };
-          
-          // Publish event to peers
-          await this.eventService.publish(event);
-        }
-      } catch (error) {
-        // Log the error but don't fail the post creation
-        console.error('Failed to broadcast post to peers:', error);
-      }
-
-      return ApiResponse.success(postDTO);
+        hashtags: post.hashtags.map(h => h.hashtag.name),
+        mediaUrl: post.mediaUrl,
+      });
     } catch (error) {
       return ApiResponse.error('Failed to create post');
     }
   }
 
-  /**
-   * Extract hashtags from post text
-   * @param text Post text content
-   * @returns Array of hashtags without the # symbol
-   */
+  // Extract hashtags from text
   private extractHashtags(text: string): string[] {
     if (!text) return [];
     
-    // Match hashtags (words starting with # followed by word characters)
-    const hashtagRegex = /#(\w+)/g;
-    const matches = text.match(hashtagRegex);
+    const hashtagPattern = /#(\w+)/g;
+    const matches = text.match(hashtagPattern);
     
     if (!matches) return [];
     
@@ -140,28 +117,30 @@ export class PostService {
 
   async getTimeline(userId: string, cursor?: string, limit: number = 20): Promise<ApiResponse<PostDTO[]>> {
     try {
-      // Get posts from the user and users they follow
+      // Get users that this user follows
       const following = await this.prisma.follow.findMany({
         where: { followerId: userId },
         select: { followeeId: true },
       });
-
-      const followingIds = following.map(follow => follow.followeeId);
-      const authorIds = [userId, ...followingIds];
-
-      // Cursor-based pagination
-      const cursorCondition = cursor
-        ? {
-            cursor: { id: cursor },
-            skip: 1, // Skip the cursor
-          }
+      
+      const followingIds = following.map(f => f.followeeId);
+      
+      // Include the user's own posts
+      followingIds.push(userId);
+      
+      // Build cursor condition if cursor is provided
+      const cursorCondition = cursor 
+        ? { cursor: { id: cursor }, skip: 1 } 
         : {};
-
-      // Get local posts
-      const localPosts = await this.prisma.post.findMany({
+      
+      // Query posts
+      const posts = await this.prisma.post.findMany({
         where: {
-          authorId: { in: authorIds },
+          authorId: { in: followingIds },
         },
+        ...cursorCondition,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
         include: {
           author: true,
           hashtags: {
@@ -170,60 +149,24 @@ export class PostService {
             },
           },
         },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        take: limit,
-        ...cursorCondition,
       });
-
-      // Get remote posts
-      const remotePosts = await this.prisma.post.findMany({
-        where: {
-          remoteAuthorId: { not: null },
+      
+      // Format for response
+      const timeline = posts.map(post => ({
+        id: post.id,
+        text: post.text,
+        createdAt: post.createdAt.toISOString(),
+        author: {
+          id: post.author.id,
+          handle: post.author.handle,
         },
-        include: {
-          remoteAuthor: true,
-          hashtags: {
-            include: {
-              hashtag: true,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        take: limit,
-      });
-
-      // Combine and sort posts
-      const allPosts = [
-        ...localPosts.map(post => ({
-          id: post.id,
-          text: post.text,
-          createdAt: post.createdAt.toISOString(),
-          author: {
-            id: post.author.id,
-            handle: post.author.handle,
-          },
-          hashtags: post.hashtags.map(relation => relation.hashtag.name),
-        })),
-        ...remotePosts.map(post => ({
-          id: post.id,
-          text: post.text,
-          createdAt: post.createdAt.toISOString(),
-          author: {
-            id: post.remoteAuthor.id,
-            handle: post.remoteAuthor.handle || 'remote-user',
-          },
-          hashtags: post.hashtags.map(relation => relation.hashtag.name),
-        })),
-      ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-       .slice(0, limit);
-
-      return ApiResponse.success(allPosts);
+        hashtags: post.hashtags.map(h => h.hashtag.name),
+        mediaUrl: post.mediaUrl,
+      }));
+      
+      return ApiResponse.success(timeline);
     } catch (error) {
-      return ApiResponse.error('Failed to fetch timeline');
+      return ApiResponse.error('Failed to get timeline');
     }
   }
 

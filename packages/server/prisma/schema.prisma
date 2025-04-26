@@ -49,6 +49,8 @@ model Post {
   // Search metadata
   indexed       Boolean     @default(false)
   searchVector  Unsupported("tsvector")?
+  // Media URL for attachments
+  mediaUrl      String?
   // Hashtags
   hashtags      HashtagsOnPosts[]
   // Circuits

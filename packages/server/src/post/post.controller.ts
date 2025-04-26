@@ -21,7 +21,7 @@ export class PostController {
     @Body() createPostDto: CreatePostDto,
     @Request() req: any,
   ): Promise<ApiResponse<PostDTO>> {
-    const result = await this.postService.createPost(req.user.id, createPostDto.text);
+    const result = await this.postService.createPost(req.user.id, createPostDto.text, createPostDto.mediaUrl);
     
     if (!result.ok) {
       throw new BadRequestException(result.error);

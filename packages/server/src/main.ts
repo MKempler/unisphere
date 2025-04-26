@@ -4,6 +4,9 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
 import { AppModule } from './app.module';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   // Generate JWT secret if not provided
@@ -16,18 +19,57 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
   
+  // Security middleware
+  app.use(helmet());
+  app.use(cookieParser());
+  
   // Set global prefix
   app.setGlobalPrefix('api');
   
-  // Enable CORS
-  app.enableCors();
+  // Setup CORS
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    credentials: true,
+  });
+  
+  // Rate limiting middleware - general API
+  app.use(
+    rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // limit each IP to 100 requests per windowMs
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: 'Too many requests from this IP, please try again later',
+    }),
+  );
+  
+  // Rate limiting for post creation - 20 posts per 10 minutes
+  app.use('/post', 
+    rateLimit({
+      windowMs: 10 * 60 * 1000, // 10 minutes
+      max: 20, // limit each IP to 20 post requests per windowMs
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: 'Too many posts created, please try again later',
+    }),
+  );
+  
+  // Rate limiting for signup - 50 attempts per hour
+  app.use('/auth/signup', 
+    rateLimit({
+      windowMs: 60 * 60 * 1000, // 1 hour
+      max: 50, // limit each IP to 50 signup attempts per hour
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: 'Too many signup attempts from this IP, please try again later',
+    }),
+  );
   
   // Set up validation pipes
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
-      forbidNonWhitelisted: true,
     }),
   );
 

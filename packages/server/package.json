@@ -2,7 +2,9 @@
   "name": "@unisphere/server",
   "version": "0.1.0",
   "description": "UniSphere Server",
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
@@ -39,8 +41,11 @@
     "chalk": "^5.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "cookie-parser": "^1.4.7",
     "crypto-random-string": "^5.0.0",
     "dotenv": "^16.1.4",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.1.13",
@@ -86,16 +91,23 @@
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": ["ts-jest", { "tsconfig": "tsconfig.json" }]
+      "^.+\\.(t|j)s$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.json"
+        }
+      ]
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
-    "setupFilesAfterEnv": ["../jest.setup.ts"],
+    "setupFilesAfterEnv": [
+      "../jest.setup.ts"
+    ],
     "moduleNameMapper": {
       "^@unisphere/shared$": "<rootDir>/__mocks__/@unisphere/shared.ts"
     }
   }
-} 
+}

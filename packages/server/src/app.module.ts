@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
@@ -7,6 +7,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { MailerService } from './common/mailer.service';
 import { AuthModule } from './auth/auth.module';
 import { FederationModule } from './federation/federation.module';
+import { SearchModule } from './search/search.module';
+import { CircuitModule } from './circuit/circuit.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -14,19 +17,23 @@ import { FederationModule } from './federation/federation.module';
       isGlobal: true,
     }),
     JwtModule.registerAsync({
-      useFactory: () => ({
-        secret: process.env.JWT_SECRET,
+      global: true,
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: process.env.JWT_EXPIRES_IN || '1d',
+          expiresIn: configService.get<string>('JWT_EXPIRATION') || '1d',
         },
       }),
-      global: true,
+      inject: [ConfigService],
     }),
     PrismaModule,
     FederationModule,
     AuthModule,
     UserModule,
     PostModule,
+    SearchModule,
+    CircuitModule,
+    MediaModule,
   ],
   providers: [MailerService],
   exports: [MailerService],
