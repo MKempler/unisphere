@@ -43,6 +43,32 @@ model Post {
   remoteAuthorId String?
   // Federation metadata
   federationId  String?     @unique
+  // Search metadata
+  indexed       Boolean     @default(false)
+  searchVector  Unsupported("tsvector")?
+  // Hashtags
+  hashtags      HashtagsOnPosts[]
+
+  @@index([searchVector], type: Gin)
+}
+
+model Hashtag {
+  id        String            @id @default(uuid())
+  name      String            @unique
+  createdAt DateTime          @default(now())
+  posts     HashtagsOnPosts[]
+}
+
+model HashtagsOnPosts {
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  hashtag   Hashtag  @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+  hashtagId String
+  createdAt DateTime @default(now())
+
+  @@id([postId, hashtagId])
+  @@index([hashtagId])
+  @@index([postId])
 }
 
 model Follow {

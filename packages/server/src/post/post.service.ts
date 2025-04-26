@@ -30,15 +30,54 @@ export class PostService {
         return ApiResponse.error('User not found');
       }
 
-      const post = await this.prisma.post.create({
-        data: {
-          text,
-          authorId,
-        },
-        include: {
-          author: true,
-        },
+      // Extract hashtags
+      const hashtags = this.extractHashtags(text);
+
+      // Create post with hashtag connections
+      const post = await this.prisma.$transaction(async (tx) => {
+        // Create the post first
+        const newPost = await tx.post.create({
+          data: {
+            text,
+            authorId,
+          },
+        });
+
+        // Create or connect hashtags
+        if (hashtags.length > 0) {
+          // Create hashtags that don't exist yet and link them to the post
+          for (const tag of hashtags) {
+            // Find or create the hashtag
+            const hashtag = await tx.hashtag.upsert({
+              where: { name: tag },
+              create: { name: tag },
+              update: {},
+            });
+
+            // Connect hashtag to post
+            await tx.hashtagsOnPosts.create({
+              data: {
+                postId: newPost.id,
+                hashtagId: hashtag.id,
+              },
+            });
+          }
+        }
+
+        return tx.post.findUnique({
+          where: { id: newPost.id },
+          include: {
+            author: true,
+            hashtags: {
+              include: {
+                hashtag: true,
+              },
+            },
+          },
+        });
       });
+
+      const hashtagNames = post.hashtags.map(relation => relation.hashtag.name);
 
       const postDTO: PostDTO = {
         id: post.id,
@@ -48,6 +87,7 @@ export class PostService {
           id: post.author.id,
           handle: post.author.handle,
         },
+        hashtags: hashtagNames,
       };
 
       // Broadcast to peers
@@ -80,6 +120,24 @@ export class PostService {
     }
   }
 
+  /**
+   * Extract hashtags from post text
+   * @param text Post text content
+   * @returns Array of hashtags without the # symbol
+   */
+  private extractHashtags(text: string): string[] {
+    if (!text) return [];
+    
+    // Match hashtags (words starting with # followed by word characters)
+    const hashtagRegex = /#(\w+)/g;
+    const matches = text.match(hashtagRegex);
+    
+    if (!matches) return [];
+    
+    // Remove the # prefix and convert to lowercase
+    return matches.map(tag => tag.substring(1).toLowerCase());
+  }
+
   async getTimeline(userId: string, cursor?: string, limit: number = 20): Promise<ApiResponse<PostDTO[]>> {
     try {
       // Get posts from the user and users they follow
@@ -106,6 +164,11 @@ export class PostService {
         },
         include: {
           author: true,
+          hashtags: {
+            include: {
+              hashtag: true,
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -121,6 +184,11 @@ export class PostService {
         },
         include: {
           remoteAuthor: true,
+          hashtags: {
+            include: {
+              hashtag: true,
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -138,6 +206,7 @@ export class PostService {
             id: post.author.id,
             handle: post.author.handle,
           },
+          hashtags: post.hashtags.map(relation => relation.hashtag.name),
         })),
         ...remotePosts.map(post => ({
           id: post.id,
@@ -147,6 +216,7 @@ export class PostService {
             id: post.remoteAuthor.id,
             handle: post.remoteAuthor.handle || 'remote-user',
           },
+          hashtags: post.hashtags.map(relation => relation.hashtag.name),
         })),
       ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
        .slice(0, limit);
@@ -180,6 +250,11 @@ export class PostService {
           },
           include: {
             remoteAuthor: true,
+            hashtags: {
+              include: {
+                hashtag: true,
+              },
+            },
           },
           orderBy: {
             createdAt: 'desc',
@@ -194,6 +269,7 @@ export class PostService {
             id: post.remoteAuthor.id,
             handle: post.remoteAuthor.handle || 'remote-user',
           },
+          hashtags: post.hashtags.map(relation => relation.hashtag.name),
         })));
       }
 
@@ -204,6 +280,11 @@ export class PostService {
         },
         include: {
           author: true,
+          hashtags: {
+            include: {
+              hashtag: true,
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -218,6 +299,7 @@ export class PostService {
           id: post.author.id,
           handle: post.author.handle,
         },
+        hashtags: post.hashtags.map(relation => relation.hashtag.name),
       })));
     } catch (error) {
       return ApiResponse.error('Failed to fetch user posts');
