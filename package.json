@@ -1,20 +1,20 @@
 {
-  "name": "unisphere",
-  "version": "0.1.0",
+  "name": "unisphere-root",
   "private": true,
-  "description": "UniSphere - A custodial-key social platform MVP",
+  "workspaces": [ "packages/*" ],
   "scripts": {
-    "dev": "pnpm --parallel dev",
-    "build": "pnpm --recursive build",
-    "test": "pnpm --recursive test",
-    "lint": "pnpm --recursive lint"
+    "postinstall": "husky install",
+    "test":            "pnpm --recursive jest -c jest.unit.json",
+    "test:federation": "pnpm --recursive jest -c jest-federation.json",
+    "e2e":             "playwright test"
   },
-  "engines": {
-    "node": ">=16",
-    "pnpm": ">=7"
-  },
-  "packageManager": "pnpm@7.18.0",
-  "workspaces": [
-    "packages/*"
-  ]
+  "devDependencies": {
+    "jest":        "^29.7.0",
+    "ts-jest":     "^29.1.1",
+    "@types/jest": "^29.5.5",
+    "dotenv":      "^16.4.5",
+    "cross-env":   "^7.0.3",
+    "husky":       "^8.0.3",
+    "playwright":  "^1.43.1"
+  }
 } 

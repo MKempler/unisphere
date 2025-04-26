@@ -8,9 +8,10 @@
   "testEnvironment": "node",
   "testRegex": ".federation.spec.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+    "^.+\\.tsx?$": ["ts-jest", { "tsconfig": "../tsconfig.json" }]
   },
   "moduleNameMapper": {
     "^@unisphere/shared$": "<rootDir>/../shared/src"
-  }
+  },
+  "setupFilesAfterEnv": ["../jest.setup.ts"]
 } 

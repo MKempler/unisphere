@@ -96,7 +96,9 @@ The server will be available at http://localhost:3001 and the client at http://l
 Run tests for all packages:
 
 ```bash
-pnpm test
+corepack enable   # one-time
+pnpm install      # install dev-deps & hoisted bins
+pnpm test && pnpm test:federation && pnpm e2e
 ```
 
 Run federation tests specifically:

@@ -2,6 +2,7 @@
   "name": "@unisphere/client",
   "version": "0.1.0",
   "private": true,
+  "publishConfig": { "access": "public" },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -1,0 +1,9 @@
+version: "3.9"
+services:
+  postgres_b:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: unisphere_b
+    ports:
+      - "5433:5432" 

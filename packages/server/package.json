@@ -2,6 +2,7 @@
   "name": "@unisphere/server",
   "version": "0.1.0",
   "description": "UniSphere Server",
+  "publishConfig": { "access": "public" },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
@@ -12,9 +13,9 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest --passWithNoTests",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
+    "test": "jest -c jest.unit.json --passWithNoTests",
+    "test:watch": "jest -c jest.unit.json --watch",
+    "test:cov": "jest -c jest.unit.json --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json --passWithNoTests",
     "test:federation": "jest --config ./test/jest-federation.json --passWithNoTests",
@@ -50,6 +51,7 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
@@ -84,14 +86,14 @@
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.(t|j)s$": ["ts-jest", { "tsconfig": "tsconfig.json" }]
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
-    "setupFilesAfterEnv": ["../jest.setup.js"],
+    "setupFilesAfterEnv": ["../jest.setup.ts"],
     "moduleNameMapper": {
       "^@unisphere/shared$": "<rootDir>/__mocks__/@unisphere/shared.ts"
     }
