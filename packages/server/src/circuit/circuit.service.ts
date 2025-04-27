@@ -465,8 +465,15 @@ export class CircuitService {
       }
 
       // Format the posts
-      const posts = circuitPosts.map(cp => {
-        const { post } = cp;
+      const posts = await Promise.all(circuitPosts.map(async (cp) => {
+        const postId = cp.postId;
+        const post = await this.prisma.post.findUnique({
+          where: { id: postId },
+          include: {
+            author: true,
+            remoteAuthor: true
+          }
+        });
         
         // Determine if it's a local or remote post
         const isLocal = !!post.authorId;
@@ -485,7 +492,7 @@ export class CircuitService {
           },
           addedAt: cp.addedAt.toISOString(),
         };
-      });
+      }));
 
       return ApiResponse.success({
         circuit: circuitData,
@@ -496,5 +503,34 @@ export class CircuitService {
       this.logger.error(`Error getting circuit feed: ${error.message}`, error.stack);
       return ApiResponse.error('Failed to get circuit feed');
     }
+  }
+
+  mapCircuitToDTO(circuit) {
+    // Safely handle the case where owner might not be populated
+    let ownerHandle = null;
+    if ('owner' in circuit && circuit.owner) {
+      ownerHandle = circuit.owner.handle;
+    }
+
+    // Safely handle counts
+    let followersCount = 0; 
+    let postsCount = 0;
+    if ('_count' in circuit && circuit._count) {
+      followersCount = circuit._count.followers || 0;
+      postsCount = circuit._count.posts || 0;
+    }
+    
+    return {
+      id: circuit.id,
+      name: circuit.name,
+      description: circuit.description,
+      query: circuit.query,
+      isAlgo: circuit.isAlgo,
+      createdAt: circuit.createdAt,
+      ownerHandle,
+      ownerId: circuit.ownerId,
+      followersCount,
+      postsCount,
+    };
   }
 } 

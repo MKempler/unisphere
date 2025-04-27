@@ -4,6 +4,6 @@ services:
     image: postgres:15
     environment:
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: unisphere_b
+      POSTGRES_DB: kavira_b
     ports:
       - "5442:5432" 

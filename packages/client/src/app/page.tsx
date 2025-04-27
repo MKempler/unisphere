@@ -1,28 +1,44 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useAuth } from '@/context/auth-context'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
-export default function RootPage() {
-  const { user, isLoading } = useAuth()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (user) {
-        router.push('/home')
-      } else {
-        router.push('/signup')
-      }
-    }
-  }, [user, isLoading, router])
-
+export default function HomePage() {
   return (
-    <div className="flex justify-center items-center min-h-[50vh]">
-      <div className="animate-pulse">
-        <div className="h-8 w-64 bg-gray-300 rounded mb-4"></div>
-        <div className="h-4 w-48 bg-gray-300 rounded"></div>
+    <div className="max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">Welcome to Kavira</h1>
+      
+      <div className="bg-white dark:bg-n-900 rounded-lg border border-border p-6 mb-4">
+        <p className="text-foreground mb-4">
+          This is a demo of the Kavira UI with the new branding applied. The updated features include:
+        </p>
+        
+        <ul className="list-disc pl-5 space-y-2 mb-4">
+          <li>New brand colors and typography</li>
+          <li>Dark mode support with theme toggle</li>
+          <li>Mobile-friendly navigation with bottom tab bar</li>
+          <li>Responsive design for all screen sizes</li>
+          <li>SVG logo with consistent branding</li>
+        </ul>
+        
+        <p className="text-accent font-medium">
+          One world. Many voices.
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-n-900 rounded-lg border border-border p-4">
+          <h2 className="font-semibold mb-2">Primary Color</h2>
+          <div className="h-20 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
+            #3B82F6
+          </div>
+        </div>
+        
+        <div className="bg-white dark:bg-n-900 rounded-lg border border-border p-4">
+          <h2 className="font-semibold mb-2">Accent Color</h2>
+          <div className="h-20 bg-accent rounded-md flex items-center justify-center text-accent-foreground">
+            #10B981
+          </div>
+        </div>
       </div>
     </div>
   )

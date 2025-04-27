@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { PostDTO } from '@unisphere/shared';
+import { Prisma } from '@prisma/client';
 
 interface SearchResult {
   posts: PostDTO[];
@@ -75,16 +76,14 @@ export class SearchService {
         });
       }
 
-      // Add cursor for pagination
-      const cursorCondition = cursor
-        ? { cursor: { id: cursor }, skip: 1 }
-        : {};
+      // Build pagination params as a properly typed object
+      const paginationParams: Prisma.PostFindManyArgs = cursor
+        ? { take: limit + 1, cursor: { id: cursor }, skip: 1 }
+        : { take: limit + 1 };
 
-      // Execute the query
+      // Use the spread with properly typed params
       const posts = await this.prisma.post.findMany({
-        where,
-        ...cursorCondition,
-        take: limit,
+        ...paginationParams,
         orderBy: { createdAt: 'desc' },
         include: {
           author: {
@@ -109,6 +108,7 @@ export class SearchService {
             }
           }
         },
+        where,
       });
 
       // Get the next cursor

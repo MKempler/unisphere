@@ -1,28 +1,54 @@
 'use client'
 
-import { PostDTO } from '@unisphere/shared'
-import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 
-export interface PostCardProps {
-  post: PostDTO
+// Simplified for testing
+interface PostDTO {
+  id: string;
+  text: string;
+  createdAt: string;
+  author: {
+    id: string;
+    handle: string;
+  };
+  hashtags?: string[];
+  mediaUrl?: string;
+}
+
+interface PostCardProps {
+  post: PostDTO;
 }
 
 export function PostCard({ post }: PostCardProps) {
   return (
-    <div className="border border-gray-200 p-4 rounded-lg mb-4 hover:bg-gray-50 transition-colors">
+    <div className="bg-background dark:bg-n-900 border border-border rounded-lg p-4 mb-4">
       <div className="flex items-center mb-2">
-        <Link 
-          href={`/@${post.author.handle}`}
-          className="font-medium text-blue-600 hover:underline"
-        >
+        <Link href={`/profile/${post.author.handle}`} className="font-medium text-primary hover:underline">
           @{post.author.handle}
         </Link>
-        <span className="text-gray-500 text-sm ml-2">
-          {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-        </span>
+        <span className="mx-2 text-muted-foreground">•</span>
+        <time className="text-sm text-muted-foreground" dateTime={post.createdAt}>
+          {new Date(post.createdAt).toLocaleDateString()}
+        </time>
       </div>
-      <p className="text-gray-800 whitespace-pre-wrap">{post.text}</p>
+      
+      <p className="text-foreground mb-4 whitespace-pre-wrap">{post.text}</p>
+      
+      {post.mediaUrl && (
+        <div className="mb-4 rounded-lg overflow-hidden">
+          <img src={post.mediaUrl} alt="Post media" className="w-full h-auto" />
+        </div>
+      )}
+      
+      {post.hashtags && post.hashtags.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {post.hashtags.map((tag) => (
+            <Link key={tag} href={`/search?q=%23${tag}`} className="text-primary text-sm hover:underline">
+              #{tag}
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   )
 } 

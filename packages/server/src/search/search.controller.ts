@@ -18,7 +18,7 @@ export class SearchController {
     @Query('q') query: string,
     @Query('cursor') cursor?: string,
     @Query('limit') limit?: number,
-  ) {
+  ): Promise<any> {
     return this.searchService.search(query, cursor, limit ? parseInt(limit as unknown as string) : 20);
   }
 
@@ -26,7 +26,7 @@ export class SearchController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get trending hashtags' })
   @ApiQuery({ name: 'limit', description: 'Number of trending tags to return', required: false })
-  async getTrendingTags(@Query('limit') limit?: number) {
+  async getTrendingTags(@Query('limit') limit?: number): Promise<any> {
     return this.searchService.getTrendingTags(limit ? parseInt(limit as unknown as string) : 10);
   }
 } 

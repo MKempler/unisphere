@@ -6,6 +6,10 @@ import {
   HttpStatus,
   BadRequestException,
   HttpException,
+  ConflictException,
+  Get,
+  Query,
+  Param,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -14,7 +18,8 @@ import { AuthResponseDTO } from '@unisphere/shared';
 import { ApiResponse } from '../common/api-response';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { Public } from 'src/auth/decorators/public.decorator';
+import { Public } from './decorators/public.decorator';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -22,6 +27,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
   ) {}
 
   @Public()
@@ -60,8 +66,15 @@ export class AuthController {
     }
 
     // Continue with signup process after successful verification
-    await this.authService.signup(dto);
-    return ApiResponse.success({ message: 'Magic link sent to your email' });
+    try {
+      await this.authService.signup(dto);
+      return ApiResponse.success({ message: 'Magic link sent to your email' });
+    } catch (error) {
+      if (error.code === 'P2002') {
+        throw new ConflictException('Email already registered');
+      }
+      throw new BadRequestException(error.message);
+    }
   }
 
   @Post('callback')
@@ -100,6 +113,9 @@ export class AuthController {
       const result = await this.authService.claimUserHandle(dto.token, dto.handle);
       return ApiResponse.success({ message: 'Account claimed successfully. Check your email for a magic link to log in.' });
     } catch (error) {
+      if (error.code === 'P2002') {
+        throw new ConflictException('Handle already taken');
+      }
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
@@ -107,12 +123,18 @@ export class AuthController {
   @Public()
   @Post('forgot-password')
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    await this.authService.sendPasswordResetLink(dto.email);
-    return {
-      success: true,
-      data: {
+    try {
+      await this.authService.sendPasswordResetLink(dto.email);
+      return {
+        success: true,
         message: 'Password reset link sent to your email',
-      },
-    };
+      };
+    } catch (error) {
+      // Don't reveal if email exists or not
+      return {
+        success: true,
+        message: 'If the email exists, a password reset link has been sent',
+      };
+    }
   }
 } 

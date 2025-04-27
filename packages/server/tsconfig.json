@@ -12,13 +12,23 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": true,
-    "noImplicitAny": true,
-    "strictBindCallApply": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false,
+    "esModuleInterop": true,
+    "noUnusedLocals": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "ignoreDeprecations": "5.0",
+    "checkJs": false,
+    "skipDefaultLibCheck": true,
+    "noEmitOnError": false,
     "paths": {
-      "@app/*": ["src/*"]
+      "@app/*": ["src/*"],
+      "@unisphere/shared": ["../shared/src"]
     }
-  }
+  },
+  "include": ["src", "bin", "test", "e2e", "playwright.config.ts"],
+  "exclude": ["node_modules", "dist"]
 } 

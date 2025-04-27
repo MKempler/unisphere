@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 import * as dotenv from 'dotenv';
-import * as chalk from 'chalk';
+import chalk from 'chalk';
 
 // Load environment variables
 dotenv.config();

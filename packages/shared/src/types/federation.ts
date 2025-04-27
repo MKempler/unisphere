@@ -1,14 +1,19 @@
 import * as nacl from 'tweetnacl';
 import * as naclUtil from 'tweetnacl-util';
 
-export type UniEventType = "POST_CREATED" | "PROFILE_MOVED";
+export type UniEventType = keyof UniEventBodyMap;
 
-export interface UniEvent<T = unknown> {
+export interface UniEventBodyMap {
+  POST_CREATED: { text: string };
+  PROFILE_MOVED: { newHome: string };
+}
+
+export interface UniEvent<T extends UniEventType = UniEventType> {
   id: string;          // UUID v4
-  type: UniEventType;
+  type: T;
   authorDid: string;
   createdAt: string;   // ISO
-  body: T;             // Event payload
+  body: UniEventBodyMap[T];
   sig: string;         // Ed25519 signature (base64)
 }
 
@@ -27,7 +32,10 @@ export interface UniEventProfileMoved {
  * @param privateKeyBase64 Ed25519 private key in base64 format
  * @returns The event with signature added
  */
-export function signEvent<T>(event: Omit<UniEvent<T>, 'sig'>, privateKeyBase64: string): UniEvent<T> {
+export function signEvent<T extends UniEventType>(
+  event: Omit<UniEvent<T>, 'sig'>, 
+  privateKeyBase64: string
+): UniEvent<T> {
   try {
     // Decode the private key from base64
     const privateKey = naclUtil.decodeBase64(privateKeyBase64);
@@ -64,7 +72,7 @@ export function signEvent<T>(event: Omit<UniEvent<T>, 'sig'>, privateKeyBase64: 
  * @param publicKeyBase64 Ed25519 public key in base64 format
  * @returns True if signature is valid
  */
-export function verifyEvent<T>(event: UniEvent<T>, publicKeyBase64: string): boolean {
+export function verifyEvent<T extends UniEventType>(event: UniEvent<T>, publicKeyBase64: string): boolean {
   try {
     // Decode the public key from base64
     const publicKey = naclUtil.decodeBase64(publicKeyBase64);

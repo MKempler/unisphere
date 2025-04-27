@@ -1,21 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from './ui/button'
-import { useAuth } from '@/context/auth-context'
-import { fetcher } from '@/lib/utils'
-import { PostDTO } from '@unisphere/shared'
+import { useAuth } from '@/context/AuthContext'
+import { toast } from 'react-hot-toast'
 
 interface ComposeBoxProps {
-  onPostCreated?: (post: PostDTO) => void
+  onPostCreated?: (text: string) => void
 }
 
 export function ComposeBox({ onPostCreated }: ComposeBoxProps) {
   const [text, setText] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { token } = useAuth()
-  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,21 +22,13 @@ export function ComposeBox({ onPostCreated }: ComposeBoxProps) {
     setIsSubmitting(true)
     
     try {
-      const post = await fetcher<PostDTO>('/api/post', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ text }),
-      })
-      
-      setText('')
       if (onPostCreated) {
-        onPostCreated(post)
+        onPostCreated(text)
       }
-      router.refresh()
+      setText('')
     } catch (error) {
       console.error('Error creating post:', error)
+      toast.error('Failed to create post')
     } finally {
       setIsSubmitting(false)
     }

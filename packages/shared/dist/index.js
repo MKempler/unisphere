@@ -18,3 +18,5 @@ __exportStar(require("./types/user"), exports);
 __exportStar(require("./types/post"), exports);
 __exportStar(require("./types/auth"), exports);
 __exportStar(require("./types/federation"), exports);
+__exportStar(require("./types/circuit"), exports);
+__exportStar(require("./types/circuits"), exports);

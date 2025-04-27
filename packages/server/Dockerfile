@@ -18,10 +18,10 @@ COPY packages/shared/ ./packages/shared/
 COPY packages/server/ ./packages/server/
 
 # Build shared package
-RUN pnpm --filter @unisphere/shared build
+RUN pnpm --filter kavira-shared build
 
 # Build server package
-RUN pnpm --filter @unisphere/server build
+RUN pnpm --filter kavira-server build
 
 # Generate Prisma client
 RUN cd packages/server && pnpm prisma:generate

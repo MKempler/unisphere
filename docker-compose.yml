@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: unisphere
+      POSTGRES_DB: kavira
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -24,9 +24,9 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/unisphere?schema=public
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/kavira?schema=public
       - PORT=3001
-      - JWT_SECRET=${JWT_SECRET:-unisphere-jwt-secret-key-for-development-only}
+      - JWT_SECRET=${JWT_SECRET:-kavira-jwt-secret-key-for-development-only}
       - JWT_EXPIRES_IN=1d
     depends_on:
       postgres:

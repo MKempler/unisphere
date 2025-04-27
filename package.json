@@ -8,7 +8,8 @@
     "postinstall": "husky install",
     "test": "pnpm --recursive jest -c jest.unit.json",
     "test:federation": "pnpm --recursive jest -c jest-federation.json",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "dev:all": "pnpm -r dev"
   },
   "devDependencies": {
     "@types/jest": "^29.5.5",
@@ -21,6 +22,11 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.797.0",
-    "@aws-sdk/s3-presigned-post": "^3.797.0"
+    "@aws-sdk/s3-presigned-post": "^3.797.0",
+    "@tanstack/react-query": "^5.74.4",
+    "@tanstack/react-query-devtools": "^5.74.6",
+    "axios": "^1.9.0",
+    "react-hot-toast": "^2.5.2",
+    "react-query": "^3.39.3"
   }
 }

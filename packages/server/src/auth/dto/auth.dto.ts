@@ -29,6 +29,10 @@ export class ClaimDto {
   @IsString()
   @IsNotEmpty()
   handle: string;
+
+  @IsString()
+  @IsNotEmpty()
+  token: string;
 }
 
 export class ConfirmDto {

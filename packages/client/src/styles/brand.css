@@ -1,0 +1,16 @@
+:root {
+  --primary: 222 89% 56%;          /* #3B82F6 */
+  --primary-foreground: 0 0% 100%;
+  --accent: 164 76% 41%;           /* #10B981 */
+  --accent-foreground: 0 0% 100%;
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --border: 215 20% 65%;
+  --muted: 215 16% 92%;
+  --n-900: 222 47% 11%;
+}
+
+.dark {
+  --background: 222 47% 11%;
+  --foreground: 0 0% 100%;
+} 

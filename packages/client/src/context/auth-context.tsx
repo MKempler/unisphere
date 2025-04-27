@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AuthResponseDTO } from '@unisphere/shared';
+import { AuthResponseDTO } from 'kavira-shared';
 
 interface AuthContextType {
   user: AuthResponseDTO['user'] | null;

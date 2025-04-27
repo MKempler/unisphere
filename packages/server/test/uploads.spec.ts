@@ -4,7 +4,7 @@ import { MediaModule } from '../src/media/media.module';
 import { MediaService } from '../src/media/media.service';
 import { JwtModule } from '@nestjs/jwt';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { S3Client } from '@aws-sdk/client-s3';
 import { AuthModule } from '../src/auth/auth.module';

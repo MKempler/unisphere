@@ -129,17 +129,16 @@ export class PostService {
       followingIds.push(userId);
       
       // Build cursor condition if cursor is provided
-      const cursorCondition = cursor 
-        ? { cursor: { id: cursor }, skip: 1 } 
-        : {};
+      const pagination = cursor
+        ? { take: limit, cursor: { id: cursor }, skip: 1 }
+        : { take: limit };
       
       // Query posts
       const posts = await this.prisma.post.findMany({
         where: {
           authorId: { in: followingIds },
         },
-        ...cursorCondition,
-        take: limit,
+        ...pagination,
         orderBy: { createdAt: 'desc' },
         include: {
           author: true,
